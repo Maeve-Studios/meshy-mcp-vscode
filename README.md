@@ -1,6 +1,6 @@
 # Meshy AI for Copilot
 
-A VS Code extension that exposes [Meshy.ai](https://www.meshy.ai) Text-to-3D APIs as **GitHub Copilot language model tools**, so you can generate 3D game assets directly from Copilot chat in agent mode.
+A VS Code extension that exposes [Meshy.ai](https://www.meshy.ai) 3D generation APIs as **GitHub Copilot language model tools**, so you can generate, retexture, and remesh 3D game assets directly from Copilot chat in agent mode.
 
 ## Requirements
 
@@ -39,14 +39,19 @@ The extension activates automatically — no compilation or setup required. Open
 
 ## Available Tools
 
-| Tool                       | What it does                                                      |
-| -------------------------- | ----------------------------------------------------------------- |
-| `meshy_preview`            | Submit a Text-to-3D preview task and return the task ID           |
-| `meshy_refine`             | Add PBR textures to a completed preview task                      |
-| `meshy_status`             | Check the status and progress of any task                         |
-| `meshy_download`           | Download the GLB from a completed task to a local path            |
-| `meshy_generate`           | Full pipeline: preview → refine → download in one step            |
-| `meshy_generate_from_file` | Batch-process a JSON assets file, resuming from where it left off |
+| Tool                       | What it does                                                                 |
+| -------------------------- | ---------------------------------------------------------------------------- |
+| `meshy_preview`            | Submit a Text-to-3D preview task and return the task ID                      |
+| `meshy_refine`             | Add PBR textures to a completed preview task                                 |
+| `meshy_status`             | Check the status and progress of any task                                    |
+| `meshy_download`           | Download the GLB from a completed task to a local path                       |
+| `meshy_generate`           | Full pipeline: preview → refine → download in one step                       |
+| `meshy_generate_from_file` | Batch-process a JSON assets file, resuming from where it left off            |
+| `meshy_balance`            | Check your current Meshy.ai credit balance                                   |
+| `meshy_image_to_3d`        | Generate a 3D model from a single reference image                            |
+| `meshy_multi_image_to_3d`  | Generate a 3D model from multiple reference images (front, side, back, etc.) |
+| `meshy_retexture`          | Apply new AI-generated textures to an existing 3D model                      |
+| `meshy_remesh`             | Clean up geometry, retopologise, or convert format of a 3D model             |
 
 You can reference these tools directly in Copilot chat using `#meshy_generate`, `#meshy_status`, etc., or simply describe what you want and Copilot will invoke the appropriate tool.
 
@@ -104,6 +109,13 @@ The extension will show a confirmation prompt before making any API calls that c
 | Preview (Text-to-3D, Meshy-6)    | 20 credits |
 | Refine / PBR texturing           | 10 credits |
 | Full pipeline (`meshy_generate`) | 30 credits |
+| Image to 3D — no texture         | 20 credits |
+| Image to 3D — with texture       | 30 credits |
+| Multi-Image to 3D — no texture   | 20 credits |
+| Multi-Image to 3D — with texture | 30 credits |
+| Retexture (`meshy_retexture`)    | 10 credits |
+| Remesh (`meshy_remesh`)          | 5 credits  |
+| Check balance (`meshy_balance`)  | Free       |
 
 Credit costs are shown in the confirmation dialog before each operation. For batch runs, the total cost across all pending assets is shown upfront.
 

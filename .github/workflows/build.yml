@@ -11,6 +11,16 @@ on:
       - "webpack.config.js"
       - "tsconfig.json"
       - ".github/workflows/build.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "package.json"
+      - "package-lock.json"
+      - "webpack.config.js"
+      - "tsconfig.json"
+      - ".github/workflows/build.yml"
 
 jobs:
   build:
