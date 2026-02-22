@@ -6,6 +6,10 @@ on:
       - main
     paths:
       - "src/**"
+      - "package.json"
+      - "package-lock.json"
+      - "webpack.config.js"
+      - "tsconfig.json"
 
 jobs:
   build:
