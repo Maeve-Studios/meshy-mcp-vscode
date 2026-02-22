@@ -10,6 +10,14 @@ function result(text: string): vscode.LanguageModelToolResult {
 interface BalanceInput {}
 
 export class MeshyBalanceTool implements vscode.LanguageModelTool<BalanceInput> {
+  async prepareInvocation(
+    _options: vscode.LanguageModelToolInvocationPrepareOptions<BalanceInput>,
+  ): Promise<vscode.PreparedToolInvocation> {
+    return {
+      invocationMessage: 'Fetching Meshy credit balance…',
+    };
+  }
+
   async invoke(
     _options: vscode.LanguageModelToolInvocationOptions<BalanceInput>,
     _token: vscode.CancellationToken,
