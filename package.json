@@ -4,6 +4,7 @@
   "description": "Expose Meshy.ai Text-to-3D APIs to GitHub Copilot as language model tools",
   "version": "0.1.0",
   "publisher": "Maeve-Studios",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/Maeve-Studios/meshy-mcp-vscode"
