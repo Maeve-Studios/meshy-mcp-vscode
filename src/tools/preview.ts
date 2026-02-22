@@ -17,6 +17,14 @@ export class PreviewTool implements vscode.LanguageModelTool<PreviewInput> {
     const prompt = options.input.prompt;
     return {
       invocationMessage: `Submitting Meshy preview task for: "${prompt.slice(0, 60)}${prompt.length > 60 ? '…' : ''}"`,
+      confirmationMessages: {
+        title: 'Submit Meshy Preview Task',
+        message: new vscode.MarkdownString(
+          `This will submit a Text-to-3D preview task to Meshy.ai.\n\n` +
+          `**Prompt:** ${prompt}\n\n` +
+          `**Cost:** 20 Meshy credits`,
+        ),
+      },
     };
   }
 

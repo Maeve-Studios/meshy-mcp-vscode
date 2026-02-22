@@ -39,9 +39,26 @@ export class GenerateFromFileTool implements vscode.LanguageModelTool<GenerateFr
   async prepareInvocation(
     options: vscode.LanguageModelToolInvocationPrepareOptions<GenerateFromFileInput>,
   ): Promise<vscode.PreparedToolInvocation> {
-    const label = options.input.dry_run ? 'dry run' : 'generate';
+    const { assets_file, dry_run, skip_refine, only } = options.input;
+    const label = dry_run ? 'dry run' : 'generate';
+    const invocationMessage = `Meshy ${label} from: ${path.basename(assets_file)}`;
+
+    if (dry_run) {
+      return { invocationMessage };
+    }
+
+    const creditsEach = skip_refine ? 20 : 30;
+    const filterNote = only && only.length > 0 ? `\n\n**Filter:** only assets matching: ${only.join(', ')}` : '';
     return {
-      invocationMessage: `Meshy ${label} from: ${path.basename(options.input.assets_file)}`,
+      invocationMessage,
+      confirmationMessages: {
+        title: 'Generate 3D Assets from File via Meshy',
+        message: new vscode.MarkdownString(
+          `This will process all pending assets in \`${path.basename(assets_file)}\` and call the Meshy API for each one.\n\n` +
+          `**Cost:** ${creditsEach} credits per asset (${skip_refine ? 'preview only' : 'preview + PBR refine'})${filterNote}\n\n` +
+          `Progress is saved back to the file after each step so the run can be resumed if interrupted.`,
+        ),
+      },
     };
   }
 

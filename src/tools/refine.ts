@@ -10,8 +10,17 @@ export class RefineTool implements vscode.LanguageModelTool<RefineInput> {
   async prepareInvocation(
     options: vscode.LanguageModelToolInvocationPrepareOptions<RefineInput>,
   ): Promise<vscode.PreparedToolInvocation> {
+    const taskId = options.input.preview_task_id;
     return {
-      invocationMessage: `Submitting Meshy refine task for preview \`${options.input.preview_task_id.slice(0, 12)}…\``,
+      invocationMessage: `Submitting Meshy refine task for preview \`${taskId.slice(0, 12)}…\``,
+      confirmationMessages: {
+        title: 'Submit Meshy Refine Task',
+        message: new vscode.MarkdownString(
+          `This will add high-quality PBR textures to a completed Meshy preview task.\n\n` +
+          `**Preview task ID:** \`${taskId}\`\n\n` +
+          `**Cost:** 10 Meshy credits`,
+        ),
+      },
     };
   }
 

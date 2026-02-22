@@ -18,8 +18,18 @@ export class GenerateTool implements vscode.LanguageModelTool<GenerateInput> {
   ): Promise<vscode.PreparedToolInvocation> {
     const { prompt, skip_refine } = options.input;
     const credits = skip_refine ? 20 : 30;
+    const stages = skip_refine ? 'preview only' : 'preview + PBR refine';
     return {
       invocationMessage: `Generating 3D asset via Meshy (${credits} credits): "${prompt.slice(0, 60)}${prompt.length > 60 ? '…' : ''}"`,
+      confirmationMessages: {
+        title: 'Generate 3D Asset via Meshy',
+        message: new vscode.MarkdownString(
+          `This will run the full Meshy pipeline (${stages}) and download the result.\n\n` +
+          `**Prompt:** ${prompt}\n\n` +
+          `**Cost:** ${credits} Meshy credits\n\n` +
+          `**Output:** ${options.input.output_path}`,
+        ),
+      },
     };
   }
 
