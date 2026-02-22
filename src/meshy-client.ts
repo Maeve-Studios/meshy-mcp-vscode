@@ -86,7 +86,7 @@ export interface RemeshOptions {
 }
 
 export interface MeshyBalance {
-  balance: number;
+  credit_balance: number;
 }
 
 export type ProgressCallback = (status: string, progress: number, precedingTasks?: number) => void;
