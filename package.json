@@ -63,9 +63,12 @@
     "languageModelTools": [
       {
         "name": "meshy_preview",
+        "toolReferenceName": "meshyPreview",
         "displayName": "Meshy: Create Preview",
+        "userDescription": "Submit a Text-to-3D preview task to Meshy.ai.",
         "modelDescription": "Submit a Text-to-3D preview task to Meshy.ai. Returns a task ID that you can pass to meshy_status to check progress, or meshy_refine to add PBR textures. Cost: 20 credits.",
         "canBeReferencedInPrompt": true,
+        "tags": ["meshy", "3d", "generate"],
         "icon": "$(symbol-misc)",
         "inputSchema": {
           "type": "object",
@@ -106,9 +109,12 @@
       },
       {
         "name": "meshy_refine",
+        "toolReferenceName": "meshyRefine",
         "displayName": "Meshy: Refine with PBR",
+        "userDescription": "Add PBR textures to a completed Meshy preview task.",
         "modelDescription": "Submit a refine task for a completed Meshy preview. Adds high-quality PBR textures (albedo, normal, roughness, metallic). Returns a new task ID. Cost: 10 credits.",
         "canBeReferencedInPrompt": true,
+        "tags": ["meshy", "3d", "generate"],
         "icon": "$(symbol-misc)",
         "inputSchema": {
           "type": "object",
@@ -129,9 +135,12 @@
       },
       {
         "name": "meshy_status",
+        "toolReferenceName": "meshyStatus",
         "displayName": "Meshy: Get Task Status",
+        "userDescription": "Check the status and progress of a Meshy.ai task.",
         "modelDescription": "Get the current status and progress of a Meshy.ai task. Returns status (PENDING, IN_PROGRESS, SUCCEEDED, FAILED), progress percentage, preceding_tasks count, and model_urls when complete.",
         "canBeReferencedInPrompt": true,
+        "tags": ["meshy", "3d"],
         "icon": "$(symbol-misc)",
         "inputSchema": {
           "type": "object",
@@ -148,9 +157,12 @@
       },
       {
         "name": "meshy_download",
+        "toolReferenceName": "meshyDownload",
         "displayName": "Meshy: Download GLB",
+        "userDescription": "Download the GLB file from a completed Meshy task to a local path.",
         "modelDescription": "Download the GLB file from a completed Meshy task to a local path. The task must have status SUCCEEDED.",
         "canBeReferencedInPrompt": true,
+        "tags": ["meshy", "3d"],
         "icon": "$(symbol-misc)",
         "inputSchema": {
           "type": "object",
@@ -172,9 +184,12 @@
       },
       {
         "name": "meshy_generate",
+        "toolReferenceName": "meshyGenerate",
         "displayName": "Meshy: Generate 3D Asset",
+        "userDescription": "Generate a single 3D asset end-to-end via Meshy.ai (preview → refine → download).",
         "modelDescription": "Run the full Meshy.ai pipeline end-to-end: submit preview → poll until done → submit refine → poll until done → download GLB. PREFER THIS TOOL over calling meshy_preview, meshy_refine, meshy_status, and meshy_download individually whenever the user wants to generate a single 3D asset from a text description. Only use the individual tools if the user explicitly asks for step-by-step control. Total cost: 30 credits (or 20 credits if skip_refine is true).",
         "canBeReferencedInPrompt": true,
+        "tags": ["meshy", "3d", "generate"],
         "icon": "$(symbol-misc)",
         "inputSchema": {
           "type": "object",
@@ -222,9 +237,12 @@
       },
       {
         "name": "meshy_generate_from_file",
+        "toolReferenceName": "meshyGenerateFromFile",
         "displayName": "Meshy: Generate from Assets File",
+        "userDescription": "Batch-generate 3D assets from a JSON assets definition file via Meshy.ai.",
         "modelDescription": "Process a JSON assets definition file and generate all pending 3D assets via Meshy.ai. PREFER THIS TOOL over meshy_generate when the user mentions a file, a list of assets, multiple models, or a batch job. The JSON file has a 'settings' block (shared style_suffix and negative_prompt) and an 'assets' array where each entry has 'id', 'prompt', and 'output_path'. Progress is written back to the file after each step so interrupted runs resume automatically from where they left off. Use 'only' to filter to specific asset IDs, 'dry_run' to preview without calling the API.",
         "canBeReferencedInPrompt": true,
+        "tags": ["meshy", "3d", "generate"],
         "icon": "$(symbol-misc)",
         "inputSchema": {
           "type": "object",
