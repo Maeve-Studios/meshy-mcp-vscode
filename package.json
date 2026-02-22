@@ -1,0 +1,280 @@
+{
+  "name": "meshy-mcp",
+  "displayName": "Meshy AI for Copilot",
+  "description": "Expose Meshy.ai Text-to-3D APIs to GitHub Copilot as language model tools",
+  "version": "0.1.0",
+  "publisher": "Maeve-Studios",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Maeve-Studios/scripts-and-utils"
+  },
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "categories": [
+    "AI",
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Meshy AI",
+      "properties": {
+        "meshy.apiKey": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Your Meshy.ai API key. You can also set the `MESHY_API_KEY` environment variable.",
+          "order": 1
+        },
+        "meshy.pollIntervalSeconds": {
+          "type": "number",
+          "default": 10,
+          "minimum": 5,
+          "description": "How often (in seconds) to poll Meshy for task status.",
+          "order": 2
+        },
+        "meshy.defaultStyleSuffix": {
+          "type": "string",
+          "default": "",
+          "description": "Style description appended to every prompt (e.g. 'low-poly game asset, PBR textures').",
+          "order": 3
+        },
+        "meshy.defaultNegativePrompt": {
+          "type": "string",
+          "default": "",
+          "description": "Shared negative prompt applied to every generation.",
+          "order": 4
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "meshy.setApiKey",
+        "title": "Meshy: Set API Key"
+      },
+      {
+        "command": "meshy.openDashboard",
+        "title": "Meshy: Open Dashboard"
+      }
+    ],
+    "languageModelTools": [
+      {
+        "name": "meshy_preview",
+        "displayName": "Meshy: Create Preview",
+        "modelDescription": "Submit a Text-to-3D preview task to Meshy.ai. Returns a task ID that you can pass to meshy_status to check progress, or meshy_refine to add PBR textures. Cost: 20 credits.",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(symbol-misc)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "prompt"
+          ],
+          "properties": {
+            "prompt": {
+              "type": "string",
+              "description": "Description of the 3D asset to generate"
+            },
+            "style_suffix": {
+              "type": "string",
+              "description": "Optional style text appended to the prompt (e.g. 'low-poly game asset')"
+            },
+            "negative_prompt": {
+              "type": "string",
+              "description": "What to avoid in the generation"
+            },
+            "image_url": {
+              "type": "string",
+              "description": "Optional reference image URL to guide the generation (image-to-3D mode)"
+            },
+            "topology": {
+              "type": "string",
+              "enum": [
+                "quad",
+                "triangle"
+              ],
+              "description": "Mesh topology. Use 'quad' for game assets (default: quad)"
+            },
+            "target_polycount": {
+              "type": "number",
+              "description": "Target polygon count (default: 10000)"
+            }
+          }
+        }
+      },
+      {
+        "name": "meshy_refine",
+        "displayName": "Meshy: Refine with PBR",
+        "modelDescription": "Submit a refine task for a completed Meshy preview. Adds high-quality PBR textures (albedo, normal, roughness, metallic). Returns a new task ID. Cost: 10 credits.",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(symbol-misc)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "preview_task_id"
+          ],
+          "properties": {
+            "preview_task_id": {
+              "type": "string",
+              "description": "The task ID returned by meshy_preview (must have status SUCCEEDED)"
+            },
+            "enable_pbr": {
+              "type": "boolean",
+              "description": "Generate PBR texture maps (default: true)"
+            }
+          }
+        }
+      },
+      {
+        "name": "meshy_status",
+        "displayName": "Meshy: Get Task Status",
+        "modelDescription": "Get the current status and progress of a Meshy.ai task. Returns status (PENDING, IN_PROGRESS, SUCCEEDED, FAILED), progress percentage, preceding_tasks count, and model_urls when complete.",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(symbol-misc)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "task_id"
+          ],
+          "properties": {
+            "task_id": {
+              "type": "string",
+              "description": "The Meshy task ID to check"
+            }
+          }
+        }
+      },
+      {
+        "name": "meshy_download",
+        "displayName": "Meshy: Download GLB",
+        "modelDescription": "Download the GLB file from a completed Meshy task to a local path. The task must have status SUCCEEDED.",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(symbol-misc)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "task_id",
+            "output_path"
+          ],
+          "properties": {
+            "task_id": {
+              "type": "string",
+              "description": "The completed Meshy task ID (preview or refine)"
+            },
+            "output_path": {
+              "type": "string",
+              "description": "Absolute or workspace-relative path to write the .glb file (e.g. Assets/Models/my_asset.glb)"
+            }
+          }
+        }
+      },
+      {
+        "name": "meshy_generate",
+        "displayName": "Meshy: Generate 3D Asset",
+        "modelDescription": "Run the full Meshy.ai pipeline end-to-end: submit preview → poll until done → submit refine → poll until done → download GLB. Use this to generate a single 3D asset from a text description. Total cost: 30 credits.",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(symbol-misc)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "prompt",
+            "output_path"
+          ],
+          "properties": {
+            "prompt": {
+              "type": "string",
+              "description": "Description of the 3D asset to generate"
+            },
+            "output_path": {
+              "type": "string",
+              "description": "Absolute or workspace-relative path to write the .glb file"
+            },
+            "style_suffix": {
+              "type": "string",
+              "description": "Style text appended to the prompt"
+            },
+            "negative_prompt": {
+              "type": "string",
+              "description": "What to avoid in the generation"
+            },
+            "image_url": {
+              "type": "string",
+              "description": "Optional reference image URL"
+            },
+            "skip_refine": {
+              "type": "boolean",
+              "description": "Skip refine stage (faster, no PBR, costs only 20 credits)"
+            },
+            "topology": {
+              "type": "string",
+              "enum": [
+                "quad",
+                "triangle"
+              ]
+            },
+            "target_polycount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "meshy_generate_from_file",
+        "displayName": "Meshy: Generate from Assets File",
+        "modelDescription": "Process a JSON assets definition file and generate all pending 3D assets via Meshy.ai. Uses the same JSON schema as generate_meshy_assets.py. Progress is saved to the file so interrupted runs can be resumed. Use 'only' to filter specific assets.",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(symbol-misc)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "assets_file"
+          ],
+          "properties": {
+            "assets_file": {
+              "type": "string",
+              "description": "Absolute or workspace-relative path to the assets JSON file"
+            },
+            "only": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Only process assets whose 'id' field contains at least one of these strings"
+            },
+            "skip_refine": {
+              "type": "boolean",
+              "description": "Skip the refine stage for all assets"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Print what would be generated without calling the API"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "lint": "eslint src"
+  },
+  "devDependencies": {
+    "@types/node": "20.x",
+    "@types/vscode": "^1.99.0",
+    "@typescript-eslint/eslint-plugin": "^8.3.0",
+    "@typescript-eslint/parser": "^8.3.0",
+    "eslint": "^9.9.1",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.5.4",
+    "webpack": "^5.94.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "axios": "^1.7.7"
+  }
+}
