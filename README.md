@@ -71,3 +71,34 @@ npm run compile    # single build
 npm run package    # production bundle
 npm run lint       # ESLint
 ```
+
+## CI/CD
+
+### Build workflow
+
+A `.vsix` is automatically built on every push to `main` that changes files in `src/`, `package.json`, `package-lock.json`, `webpack.config.js`, `tsconfig.json`, or the workflow file itself. The artifact is named `meshy-mcp-<version>-<sha>` and is available for download from the [Actions](https://github.com/Maeve-Studios/meshy-mcp-vscode/actions/workflows/build.yml) tab on GitHub for 30 days. This is intended for developers who want to test the latest changes without waiting for a formal release.
+
+**To install a build artifact:**
+1. Go to [Actions → Build](https://github.com/Maeve-Studios/meshy-mcp-vscode/actions/workflows/build.yml)
+2. Click the latest successful run
+3. Download the artifact under **Artifacts**
+4. Unzip it and install the `.vsix` via **Extensions → ... → Install from VSIX** in VS Code
+
+### Release workflow
+
+Releases are managed using [release-drafter](https://github.com/release-drafter/release-drafter). As pull requests are merged into `main`, a draft release is automatically kept up to date with categorized change notes and a suggested next version number based on PR labels:
+
+| PR Label | Version bump |
+|---|---|
+| `patch` | `0.1.0` → `0.1.1` |
+| `minor` | `0.1.0` → `0.2.0` |
+| `major` | `0.1.0` → `1.0.0` |
+| *(none)* | defaults to patch |
+
+**To publish a release:**
+1. Go to [GitHub Releases](https://github.com/Maeve-Studios/meshy-mcp-vscode/releases) and open the current draft
+2. Review and adjust the version and release notes as needed
+3. Click **Publish release**
+
+Publishing triggers the release workflow, which builds the `.vsix` stamped with the release version and attaches it to the release as a downloadable asset.
+
