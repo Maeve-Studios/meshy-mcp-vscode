@@ -9,6 +9,7 @@ Download the latest `.vsix` from [GitHub Releases](https://github.com/Maeve-Stud
 > **Windows note:** Do not double-click the `.vsix` file — that opens the Visual Studio installer, which cannot install VS Code extensions. Use one of the methods below instead.
 
 **Option 1 — VS Code UI:**
+
 1. Open VS Code
 2. Go to the Extensions view (`Ctrl+Shift+X`)
 3. Click the `...` menu at the top-right of the Extensions panel
@@ -16,6 +17,7 @@ Download the latest `.vsix` from [GitHub Releases](https://github.com/Maeve-Stud
 5. Browse to the downloaded `.vsix` and select it
 
 **Option 2 — Command line:**
+
 ```bash
 code --install-extension meshy-mcp-<version>.vsix
 ```
@@ -28,16 +30,14 @@ After installation, set your API key (see [Configuration](#configuration)).
 - GitHub Copilot extension with agent mode
 - A [Meshy.ai](https://app.meshy.ai) account and API key
 
-## Setup
+## Getting Started
 
-```bash
-npm install
-npm run compile
-```
+After installing the extension, set your Meshy API key:
 
-Then press **F5** to run the extension, or use `vsce package` to produce a `.vsix` for installation.
+1. Press `Ctrl+Shift+P` and run **Meshy: Set API Key**
+2. Paste your key (starts with `msy_`) and press Enter
 
-Set your API key with the **Meshy: Set API Key** command, or set the `MESHY_API_KEY` environment variable.
+The extension activates automatically — no compilation or setup required. The Meshy tools will appear in Copilot agent mode immediately.
 
 ## Available Tools
 
@@ -83,14 +83,19 @@ Once active, the following tools appear automatically in Copilot agent mode:
 
 Progress (`preview_id`, `refine_id`, `done`) is saved back to the file, so interrupted runs resume automatically.
 
-## Development
+## Development (Contributing)
+
+To build and run the extension from source:
 
 ```bash
+npm install
 npm run watch      # incremental builds
 npm run compile    # single build
 npm run package    # production bundle
 npm run lint       # ESLint
 ```
+
+Press **F5** in VS Code to launch an Extension Development Host for debugging.
 
 ## CI/CD
 
