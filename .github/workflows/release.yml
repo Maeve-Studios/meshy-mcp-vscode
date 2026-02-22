@@ -25,7 +25,9 @@ jobs:
               run: npm ci
 
             - name: Package extension
-              run: npx @vscode/vsce package --no-dependencies
+              run: |
+                VERSION="${{ github.event.release.tag_name }}"
+                npx @vscode/vsce package --no-dependencies --version "${VERSION#v}"
 
             - name: Get VSIX filename
               id: vsix
