@@ -1,9 +1,14 @@
 import * as vscode from 'vscode';
+import { MeshyBalanceTool } from './tools/balance';
 import { DownloadTool } from './tools/download';
 import { GenerateFromFileTool } from './tools/generate-from-file';
 import { GenerateTool } from './tools/generate';
+import { MeshyImageTo3DTool } from './tools/image-to-3d';
+import { MeshyMultiImageTo3DTool } from './tools/multi-image-to-3d';
 import { PreviewTool } from './tools/preview';
 import { RefineTool } from './tools/refine';
+import { MeshyRemeshTool } from './tools/remesh';
+import { MeshyRetextureTool } from './tools/retexture';
 import { StatusTool } from './tools/status';
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -15,6 +20,11 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.lm.registerTool('meshy_download', new DownloadTool()),
     vscode.lm.registerTool('meshy_generate', new GenerateTool()),
     vscode.lm.registerTool('meshy_generate_from_file', new GenerateFromFileTool()),
+    vscode.lm.registerTool('meshy_balance', new MeshyBalanceTool()),
+    vscode.lm.registerTool('meshy_image_to_3d', new MeshyImageTo3DTool()),
+    vscode.lm.registerTool('meshy_multi_image_to_3d', new MeshyMultiImageTo3DTool()),
+    vscode.lm.registerTool('meshy_retexture', new MeshyRetextureTool()),
+    vscode.lm.registerTool('meshy_remesh', new MeshyRemeshTool()),
   );
 
   // ── Commands ───────────────────────────────────────────────────────────────
