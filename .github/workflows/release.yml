@@ -27,7 +27,8 @@ jobs:
             - name: Package extension
               run: |
                   VERSION="${{ github.event.release.tag_name }}"
-                  npx @vscode/vsce package --no-dependencies --version "${VERSION#v}"
+                  npm version "${VERSION#v}" --no-git-tag-version --allow-same-version
+                  npx @vscode/vsce package --no-dependencies
 
             - name: Get VSIX filename
               id: vsix
