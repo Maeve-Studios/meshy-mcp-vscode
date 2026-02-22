@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { createClient, MeshyTaskStatus } from '../meshy-client';
 
@@ -26,6 +26,14 @@ interface AssetsFile {
   assets: AssetEntry[];
 }
 
+interface GenerateContext {
+  data: AssetsFile;
+  assetsFilePath: string;
+  styleSuffix: string;
+  negativePrompt: string;
+  skipRefine: boolean;
+}
+
 interface GenerateFromFileInput {
   assets_file: string;
   only?: string[];
@@ -48,15 +56,46 @@ export class GenerateFromFileTool implements vscode.LanguageModelTool<GenerateFr
     }
 
     const creditsEach = skip_refine ? 20 : 30;
-    const filterNote = only && only.length > 0 ? `\n\n**Filter:** only assets matching: ${only.join(', ')}` : '';
+    const stages = skip_refine ? 'preview only' : 'preview + PBR refine';
+
+    // ── Try to read the file to give an accurate cost estimate ────────────────
+    let assetSummary = '';
+    try {
+      const resolvedPath = this.resolveFilePath(assets_file);
+      if (fs.existsSync(resolvedPath)) {
+        const data = JSON.parse(fs.readFileSync(resolvedPath, 'utf8')) as AssetsFile;
+        let assets = data.assets ?? [];
+        const totalInFile = assets.length;
+        const alreadyDone = assets.filter((a) => a.done).length;
+
+        if (only && only.length > 0) {
+          const filters = only;
+          assets = assets.filter((a) => filters.some((f) => a.id.includes(f)));
+        }
+
+        const pending = assets.filter((a) => !a.done).length;
+        const totalCredits = pending * creditsEach;
+
+        assetSummary =
+          `\n\n**Assets in file:** ${totalInFile}` +
+          (only && only.length > 0 ? ` → **${assets.length} match filter** (${only.join(', ')})` : '') +
+          `\n\n**Already done:** ${alreadyDone} (will be skipped)` +
+          `\n\n**To process:** ${pending} asset${pending === 1 ? '' : 's'}` +
+          `\n\n**Total cost:** ${totalCredits} credits (${pending} × ${creditsEach}, ${stages})`;
+      }
+    } catch {
+      // File unreadable at this point — show a generic cost estimate instead
+      assetSummary = `\n\n**Cost:** ${creditsEach} credits per pending asset (${stages})`;
+    }
+
     return {
       invocationMessage,
       confirmationMessages: {
         title: 'Generate 3D Assets from File via Meshy',
         message: new vscode.MarkdownString(
-          `This will process all pending assets in \`${path.basename(assets_file)}\` and call the Meshy API for each one.\n\n` +
-          `**Cost:** ${creditsEach} credits per asset (${skip_refine ? 'preview only' : 'preview + PBR refine'})${filterNote}\n\n` +
-          `Progress is saved back to the file after each step so the run can be resumed if interrupted.`,
+          `This will process pending assets in \`${path.basename(assets_file)}\` and call the Meshy API for each one.` +
+          assetSummary +
+          `\n\nProgress is saved back to the file after each step so the run can be resumed if interrupted.`,
         ),
       },
     };
@@ -67,15 +106,12 @@ export class GenerateFromFileTool implements vscode.LanguageModelTool<GenerateFr
     token: vscode.CancellationToken,
   ): Promise<vscode.LanguageModelToolResult> {
     const input = options.input;
-    const log: string[] = [];
-
-    // ── Resolve the file path ──────────────────────────────────────────────────
     const assetsFilePath = this.resolveFilePath(input.assets_file);
+
     if (!fs.existsSync(assetsFilePath)) {
       return result(`❌ Assets file not found: \`${assetsFilePath}\``);
     }
 
-    // ── Load assets file ───────────────────────────────────────────────────────
     let data: AssetsFile;
     try {
       data = JSON.parse(fs.readFileSync(assetsFilePath, 'utf8')) as AssetsFile;
@@ -84,11 +120,8 @@ export class GenerateFromFileTool implements vscode.LanguageModelTool<GenerateFr
     }
 
     const settings = data.settings ?? {};
-    const styleSuffix = settings.style_suffix ?? '';
-    const negativePrompt = settings.negative_prompt ?? '';
     let assets = data.assets ?? [];
 
-    // ── Filter ─────────────────────────────────────────────────────────────────
     if (input.only && input.only.length > 0) {
       const filters = input.only;
       assets = assets.filter((a) => filters.some((f) => a.id.includes(f)));
@@ -97,141 +130,165 @@ export class GenerateFromFileTool implements vscode.LanguageModelTool<GenerateFr
       }
     }
 
-    const total = assets.length;
-    log.push(`**Assets file:** \`${path.basename(assetsFilePath)}\``);
-    log.push(`**Assets to process:** ${total}`);
-    log.push(`**Refine stage:** ${input.skip_refine ? 'SKIPPED' : 'ENABLED (PBR)'}`);
-    if (input.dry_run) {
-      log.push(`**Mode:** DRY RUN (no API calls)`);
-    }
-    log.push('');
+    const log: string[] = [
+      `**Assets file:** \`${path.basename(assetsFilePath)}\``,
+      `**Assets to process:** ${assets.length}`,
+      `**Refine stage:** ${input.skip_refine ? 'SKIPPED' : 'ENABLED (PBR)'}`,
+      ...(input.dry_run ? ['**Mode:** DRY RUN (no API calls)'] : []),
+      '',
+    ];
 
     if (input.dry_run) {
-      for (const asset of assets) {
-        const fullPrompt = asset.prompt + styleSuffix;
-        log.push(`**[${asset.id}]**`);
-        log.push(`- Prompt: ${fullPrompt.slice(0, 100)}${fullPrompt.length > 100 ? '…' : ''}`);
-        if (asset.image_url) {
-          log.push(`- Image: ${asset.image_url}`);
-        }
-        log.push(`- Output: ${asset.output_path}`);
-        log.push('');
-      }
-      return result(log.join('\n'));
+      return result(this.buildDryRunLog(assets, settings.style_suffix ?? '', log));
     }
 
-    // ── Generate ───────────────────────────────────────────────────────────────
+    const ctx: GenerateContext = {
+      data,
+      assetsFilePath,
+      styleSuffix: settings.style_suffix ?? '',
+      negativePrompt: settings.negative_prompt ?? '',
+      skipRefine: input.skip_refine ?? false,
+    };
+
+    const { errorCount } = await this.processAllAssets(assets, ctx, log, token);
+
+    const totalDone = data.assets.filter((a) => a.done).length;
+    log.push(
+      '---',
+      `**Done:** ${totalDone}/${data.assets.length} total assets`,
+      ...(errorCount > 0 ? [`**Errors:** ${errorCount} asset(s) failed`] : []),
+      ...(totalDone === data.assets.length ? ['🎉 All assets generated!'] : []),
+    );
+
+    return result(log.join('\n'));
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+
+  private buildDryRunLog(assets: AssetEntry[], styleSuffix: string, log: string[]): string {
+    for (const asset of assets) {
+      const fullPrompt = asset.prompt + styleSuffix;
+      log.push(
+        `**[${asset.id}]**`,
+        `- Prompt: ${fullPrompt.slice(0, 100)}${fullPrompt.length > 100 ? '…' : ''}`,
+        ...(asset.image_url ? [`- Image: ${asset.image_url}`] : []),
+        `- Output: ${asset.output_path}`,
+        '',
+      );
+    }
+    return log.join('\n');
+  }
+
+  private async processAllAssets(
+    assets: AssetEntry[],
+    ctx: GenerateContext,
+    log: string[],
+    token: vscode.CancellationToken,
+  ): Promise<{ doneCount: number; errorCount: number }> {
     const client = createClient();
     let doneCount = 0;
     let errorCount = 0;
+    const total = assets.length;
 
     for (const asset of assets) {
       if (token.isCancellationRequested) {
         log.push(`⚠️ Cancelled after ${doneCount}/${total} assets.`);
         break;
       }
-
-      const destPath = this.resolveOutputPath(asset.output_path, assetsFilePath);
-
-      // Skip already completed
+      const destPath = this.resolveOutputPath(asset.output_path, ctx.assetsFilePath);
       if (asset.done && fs.existsSync(destPath)) {
         log.push(`⏭️ **[${asset.id}]** already done — skipped`);
         doneCount++;
         continue;
       }
-
       log.push(`▶ **[${asset.id}]**`);
-
       try {
-        // ── Preview ──────────────────────────────────────────────────────────
-        if (!asset.preview_id) {
-          const previewId = await client.createPreview({
-            prompt: asset.prompt + styleSuffix,
-            negative_prompt: negativePrompt,
-            image_url: asset.image_url,
-          });
-          asset.preview_id = previewId;
-          this.saveFile(assetsFilePath, data);
-          log.push(`  Preview submitted: \`${previewId}\``);
-        }
-
-        if (!asset.preview_done) {
-          await client.pollUntilDone(
-            asset.preview_id!,
-            (status, pct) => {
-              void vscode.window.setStatusBarMessage(
-                `Meshy [${asset.id}] preview: ${status} ${pct}%`,
-                8_000,
-              );
-            },
-            token,
-          );
-          asset.preview_done = true;
-          this.saveFile(assetsFilePath, data);
-        }
-
-        let finalTask: MeshyTaskStatus;
-
-        if (input.skip_refine) {
-          finalTask = await client.getTask(asset.preview_id!);
-        } else {
-          // ── Refine ────────────────────────────────────────────────────────
-          if (!asset.refine_id) {
-            const refineId = await client.createRefine({ preview_task_id: asset.preview_id! });
-            asset.refine_id = refineId;
-            this.saveFile(assetsFilePath, data);
-            log.push(`  Refine submitted: \`${refineId}\``);
-          }
-
-          if (!asset.refine_done) {
-            await client.pollUntilDone(
-              asset.refine_id!,
-              (status, pct) => {
-                void vscode.window.setStatusBarMessage(
-                  `Meshy [${asset.id}] refine: ${status} ${pct}%`,
-                  8_000,
-                );
-              },
-              token,
-            );
-            asset.refine_done = true;
-            this.saveFile(assetsFilePath, data);
-          }
-
-          finalTask = await client.getTask(asset.refine_id!);
-        }
-
-        // ── Download ──────────────────────────────────────────────────────────
-        const savedPath = await client.downloadGlb(finalTask, destPath);
-        asset.done = true;
-        this.saveFile(assetsFilePath, data);
+        const savedPath = await this.processAsset(asset, ctx, client, destPath, log, token);
         log.push(`  ✅ Saved: \`${savedPath}\``);
         doneCount++;
       } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        log.push(`  ❌ Error: ${msg}`);
+        log.push(`  ❌ Error: ${err instanceof Error ? err.message : String(err)}`);
         errorCount++;
-        this.saveFile(assetsFilePath, data);
+        this.saveFile(ctx.assetsFilePath, ctx.data);
       }
-
       log.push('');
     }
-
-    // ── Summary ────────────────────────────────────────────────────────────────
-    const totalDone = data.assets.filter((a) => a.done).length;
-    log.push(`---`);
-    log.push(`**Done:** ${totalDone}/${data.assets.length} total assets`);
-    if (errorCount > 0) {
-      log.push(`**Errors:** ${errorCount} asset(s) failed`);
-    }
-    if (totalDone === data.assets.length) {
-      log.push(`🎉 All assets generated!`);
-    }
-
-    return result(log.join('\n'));
+    return { doneCount, errorCount };
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────────
+  private async processAsset(
+    asset: AssetEntry,
+    ctx: GenerateContext,
+    client: ReturnType<typeof createClient>,
+    destPath: string,
+    log: string[],
+    token: vscode.CancellationToken,
+  ): Promise<string> {
+    await this.runPreviewStage(asset, ctx, client, log, token);
+    const finalTask = await this.getFinalTask(asset, ctx, client, log, token);
+    const savedPath = await client.downloadGlb(finalTask, destPath);
+    asset.done = true;
+    this.saveFile(ctx.assetsFilePath, ctx.data);
+    return savedPath;
+  }
+
+  private async runPreviewStage(
+    asset: AssetEntry,
+    ctx: GenerateContext,
+    client: ReturnType<typeof createClient>,
+    log: string[],
+    token: vscode.CancellationToken,
+  ): Promise<void> {
+    if (!asset.preview_id) {
+      const previewId = await client.createPreview({
+        prompt: asset.prompt + ctx.styleSuffix,
+        negative_prompt: ctx.negativePrompt,
+        image_url: asset.image_url,
+      });
+      asset.preview_id = previewId;
+      this.saveFile(ctx.assetsFilePath, ctx.data);
+      log.push(`  Preview submitted: \`${previewId}\``);
+    }
+    if (!asset.preview_done) {
+      const previewId = asset.preview_id;
+      await client.pollUntilDone(
+        previewId,
+        (status, pct) => { vscode.window.setStatusBarMessage(`Meshy [${asset.id}] preview: ${status} ${pct}%`, 8_000); },
+        token,
+      );
+      asset.preview_done = true;
+      this.saveFile(ctx.assetsFilePath, ctx.data);
+    }
+  }
+
+  private async getFinalTask(
+    asset: AssetEntry,
+    ctx: GenerateContext,
+    client: ReturnType<typeof createClient>,
+    log: string[],
+    token: vscode.CancellationToken,
+  ): Promise<MeshyTaskStatus> {
+    if (ctx.skipRefine) {
+      return client.getTask(asset.preview_id);
+    }
+    if (!asset.refine_id) {
+      const refineId = await client.createRefine({ preview_task_id: asset.preview_id });
+      asset.refine_id = refineId;
+      this.saveFile(ctx.assetsFilePath, ctx.data);
+      log.push(`  Refine submitted: \`${refineId}\``);
+    }
+    if (!asset.refine_done) {
+      const refineId = asset.refine_id;
+      await client.pollUntilDone(
+        refineId,
+        (status, pct) => { vscode.window.setStatusBarMessage(`Meshy [${asset.id}] refine: ${status} ${pct}%`, 8_000); },
+        token,
+      );
+      asset.refine_done = true;
+      this.saveFile(ctx.assetsFilePath, ctx.data);
+    }
+    return client.getTask(asset.refine_id);
+  }
 
   private resolveFilePath(filePath: string): string {
     if (path.isAbsolute(filePath)) {
