@@ -24,6 +24,6 @@ export class MeshyBalanceTool implements vscode.LanguageModelTool<BalanceInput> 
   ): Promise<vscode.LanguageModelToolResult> {
     const client = createClient();
     const balance = await client.getBalance();
-    return result(`Your current Meshy credit balance is **${balance.credit_balance.toLocaleString()} credits**.`);
+    return result(`Your current Meshy credit balance is **${balance.balance.toLocaleString()} credits**.`);
   }
 }
