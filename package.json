@@ -350,7 +350,10 @@
             },
             "topology": {
               "type": "string",
-              "enum": ["quad", "triangle"],
+              "enum": [
+                "quad",
+                "triangle"
+              ],
               "description": "Output mesh topology. Default triangle."
             },
             "target_polycount": {
@@ -363,12 +366,20 @@
             },
             "ai_model": {
               "type": "string",
-              "enum": ["meshy-5", "meshy-6", "latest"],
+              "enum": [
+                "meshy-5",
+                "meshy-6",
+                "latest"
+              ],
               "description": "AI model version. Default latest."
             },
             "symmetry_mode": {
               "type": "string",
-              "enum": ["off", "auto", "on"],
+              "enum": [
+                "off",
+                "auto",
+                "on"
+              ],
               "description": "Symmetry enforcement mode."
             }
           }
@@ -396,7 +407,9 @@
           "properties": {
             "image_urls": {
               "type": "array",
-              "items": { "type": "string" },
+              "items": {
+                "type": "string"
+              },
               "description": "URLs of the reference images (front, back, side angles, etc.)"
             },
             "output_path": {
@@ -413,7 +426,10 @@
             },
             "topology": {
               "type": "string",
-              "enum": ["quad", "triangle"],
+              "enum": [
+                "quad",
+                "triangle"
+              ],
               "description": "Output mesh topology. Default triangle."
             },
             "target_polycount": {
@@ -426,12 +442,20 @@
             },
             "ai_model": {
               "type": "string",
-              "enum": ["meshy-5", "meshy-6", "latest"],
+              "enum": [
+                "meshy-5",
+                "meshy-6",
+                "latest"
+              ],
               "description": "AI model version. Default latest."
             },
             "symmetry_mode": {
               "type": "string",
-              "enum": ["off", "auto", "on"],
+              "enum": [
+                "off",
+                "auto",
+                "on"
+              ],
               "description": "Symmetry enforcement mode."
             }
           }
@@ -484,7 +508,11 @@
             },
             "resolution": {
               "type": "string",
-              "enum": ["1024", "2048", "4096"],
+              "enum": [
+                "1024",
+                "2048",
+                "4096"
+              ],
               "description": "Texture resolution in pixels. Default 2048."
             }
           }
@@ -519,7 +547,10 @@
             },
             "topology": {
               "type": "string",
-              "enum": ["quad", "triangle"],
+              "enum": [
+                "quad",
+                "triangle"
+              ],
               "description": "Output mesh topology. Default triangle."
             },
             "target_polycount": {
@@ -530,7 +561,13 @@
               "type": "array",
               "items": {
                 "type": "string",
-                "enum": ["glb", "fbx", "obj", "usdz", "stl"]
+                "enum": [
+                  "glb",
+                  "fbx",
+                  "obj",
+                  "usdz",
+                  "stl"
+                ]
               },
               "description": "Output formats to generate. Default ['glb']."
             },
