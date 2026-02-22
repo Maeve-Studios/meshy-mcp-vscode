@@ -1,6 +1,12 @@
 # Meshy AI for Copilot
 
-A VS Code extension that exposes Meshy.ai Text-to-3D APIs as **GitHub Copilot language model tools**, so you can generate 3D game assets directly from Copilot chat in agent mode.
+A VS Code extension that exposes [Meshy.ai](https://www.meshy.ai) Text-to-3D APIs as **GitHub Copilot language model tools**, so you can generate 3D game assets directly from Copilot chat in agent mode.
+
+## Requirements
+
+- VS Code 1.99 or later
+- GitHub Copilot extension with agent mode enabled
+- A [Meshy.ai](https://www.meshy.ai) account and API key
 
 ## Installation
 
@@ -22,14 +28,6 @@ Download the latest `.vsix` from [GitHub Releases](https://github.com/Maeve-Stud
 code --install-extension meshy-mcp-<version>.vsix
 ```
 
-After installation, set your API key (see [Configuration](#configuration)).
-
-## Requirements
-
-- VS Code 1.99 or later
-- GitHub Copilot extension with agent mode
-- A [Meshy.ai](https://app.meshy.ai) account and API key
-
 ## Getting Started
 
 After installing the extension, set your Meshy API key:
@@ -37,33 +35,35 @@ After installing the extension, set your Meshy API key:
 1. Press `Ctrl+Shift+P` and run **Meshy: Set API Key**
 2. Paste your key (starts with `msy_`) and press Enter
 
-The extension activates automatically — no compilation or setup required. The Meshy tools will appear in Copilot agent mode immediately.
+The extension activates automatically — no compilation or setup required. Open Copilot chat in agent mode and the Meshy tools will be available immediately.
 
 ## Available Tools
 
-Once active, the following tools appear automatically in Copilot agent mode:
+| Tool | What it does |
+| --- | --- |
+| `meshy_preview` | Submit a Text-to-3D preview task and return the task ID |
+| `meshy_refine` | Add PBR textures to a completed preview task |
+| `meshy_status` | Check the status and progress of any task |
+| `meshy_download` | Download the GLB from a completed task to a local path |
+| `meshy_generate` | Full pipeline: preview → refine → download in one step |
+| `meshy_generate_from_file` | Batch-process a JSON assets file, resuming from where it left off |
 
-| Tool                       | What it does                                                      |
-| -------------------------- | ----------------------------------------------------------------- |
-| `meshy_preview`            | Submit a text-to-3D preview task                                  |
-| `meshy_refine`             | Add PBR textures to a completed preview                           |
-| `meshy_status`             | Check task status and progress                                    |
-| `meshy_download`           | Download the GLB from a completed task                            |
-| `meshy_generate`           | Full pipeline: preview → refine → download                        |
-| `meshy_generate_from_file` | Process a JSON assets file (mirroring `generate_meshy_assets.py`) |
+You can reference these tools directly in Copilot chat using `#meshy_generate`, `#meshy_status`, etc., or simply describe what you want and Copilot will invoke the appropriate tool.
 
 ## Configuration
 
-| Setting                       | Description                                |
-| ----------------------------- | ------------------------------------------ |
-| `meshy.apiKey`                | Your Meshy.ai API key                      |
-| `meshy.pollIntervalSeconds`   | Polling interval in seconds (default: 10)  |
-| `meshy.defaultStyleSuffix`    | Style suffix appended to all prompts       |
-| `meshy.defaultNegativePrompt` | Negative prompt applied to all generations |
+These settings can be changed in VS Code Settings (`Ctrl+,`) under **Meshy**:
 
-## Assets file format
+| Setting | Description | Default |
+| --- | --- | --- |
+| `meshy.apiKey` | Your Meshy.ai API key | _(none)_ |
+| `meshy.pollIntervalSeconds` | How often to poll for task completion | `10` |
+| `meshy.defaultStyleSuffix` | Text appended to every generation prompt | _(none)_ |
+| `meshy.defaultNegativePrompt` | Negative prompt applied to all generations | _(none)_ |
 
-`meshy_generate_from_file` reads the same JSON schema as `generate_meshy_assets.py`:
+## Batch Generation: Assets File Format
+
+`meshy_generate_from_file` reads a JSON file describing a list of assets to generate. The format mirrors the `generate_meshy_assets.py` script:
 
 ```json
 {
@@ -76,55 +76,40 @@ Once active, the following tools appear automatically in Copilot agent mode:
       "id": "Tier1/air_intake_pump",
       "output_path": "Assets/Models/Tier1/air_intake_pump.glb",
       "prompt": "An industrial air intake pump"
+    },
+    {
+      "id": "Tier1/pressure_valve",
+      "output_path": "Assets/Models/Tier1/pressure_valve.glb",
+      "prompt": "A brass pressure relief valve",
+      "image_url": "https://example.com/reference.jpg"
     }
   ]
 }
 ```
 
-Progress (`preview_id`, `refine_id`, `done`) is saved back to the file, so interrupted runs resume automatically.
+Progress fields (`preview_id`, `refine_id`, `done`) are written back to the file after each step, so interrupted runs resume automatically from where they left off.
 
-## Development (Contributing)
+You can use the `only` parameter to process a subset of assets by ID (partial match):
 
-To build and run the extension from source:
+> *"Run meshy_generate_from_file on assets.json, but only process Tier1/air_intake_pump"*
 
-```bash
-npm install
-npm run watch      # incremental builds
-npm run compile    # single build
-npm run package    # production bundle
-npm run lint       # ESLint
-```
+Use `dry_run: true` to preview what would be processed without making any API calls.
 
-Press **F5** in VS Code to launch an Extension Development Host for debugging.
+## Credit Costs
 
-## CI/CD
+The extension will show a confirmation prompt before making any API calls that consume credits.
 
-### Build workflow
+| Operation | Cost |
+| --- | --- |
+| Preview (Text-to-3D, Meshy-6) | 20 credits |
+| Refine / PBR texturing | 10 credits |
+| Full pipeline (`meshy_generate`) | 30 credits |
 
-A `.vsix` is automatically built on every push to `main` that changes files in `src/`, `package.json`, `package-lock.json`, `webpack.config.js`, `tsconfig.json`, or the workflow file itself. The artifact is named `meshy-mcp-<version>-<sha>` and is available for download from the [Actions](https://github.com/Maeve-Studios/meshy-mcp-vscode/actions/workflows/build.yml) tab on GitHub for 30 days. This is intended for developers who want to test the latest changes without waiting for a formal release.
+Credit costs are shown in the confirmation dialog before each operation. For batch runs, the total cost across all pending assets is shown upfront.
 
-**To install a build artifact:**
+## Links
 
-1. Go to [Actions → Build](https://github.com/Maeve-Studios/meshy-mcp-vscode/actions/workflows/build.yml)
-2. Click the latest successful run
-3. Download and unzip the artifact under **Artifacts**
-4. Install the `.vsix` in VS Code — see [Installation](#installation) above for how to do this correctly on Windows
-
-### Release workflow
-
-Releases are managed using [release-drafter](https://github.com/release-drafter/release-drafter). As pull requests are merged into `main`, a draft release is automatically kept up to date with categorized change notes and a suggested next version number based on PR labels:
-
-| PR Label | Version bump      |
-| -------- | ----------------- |
-| `patch`  | `0.1.0` → `0.1.1` |
-| `minor`  | `0.1.0` → `0.2.0` |
-| `major`  | `0.1.0` → `1.0.0` |
-| _(none)_ | defaults to patch |
-
-**To publish a release:**
-
-1. Go to [GitHub Releases](https://github.com/Maeve-Studios/meshy-mcp-vscode/releases) and open the current draft
-2. Review and adjust the version and release notes as needed
-3. Click **Publish release**
-
-Publishing triggers the release workflow, which builds the `.vsix` stamped with the release version and attaches it to the release as a downloadable asset.
+- [Meshy.ai](https://www.meshy.ai) — create an account and get an API key
+- [Meshy API Docs](https://docs.meshy.ai) — API reference
+- [GitHub Releases](https://github.com/Maeve-Studios/meshy-mcp-vscode/releases) — download the latest `.vsix`
+- [Contributing](CONTRIBUTING.md) — building from source and submitting changes
