@@ -6,7 +6,7 @@
   "publisher": "Maeve-Studios",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Maeve-Studios/scripts-and-utils"
+    "url": "https://github.com/Maeve-Studios/meshy-mcp-vscode"
   },
   "engines": {
     "vscode": "^1.99.0"
