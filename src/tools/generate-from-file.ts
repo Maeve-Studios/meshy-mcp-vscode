@@ -251,6 +251,9 @@ export class GenerateFromFileTool implements vscode.LanguageModelTool<GenerateFr
     }
     if (!asset.preview_done) {
       const previewId = asset.preview_id;
+      if (!previewId) {
+        throw new Error(`[${asset.id}] preview_id missing before polling`);
+      }
       await client.pollUntilDone(
         previewId,
         (status, pct) => { vscode.window.setStatusBarMessage(`Meshy [${asset.id}] preview: ${status} ${pct}%`, 8_000); },
@@ -268,6 +271,9 @@ export class GenerateFromFileTool implements vscode.LanguageModelTool<GenerateFr
     log: string[],
     token: vscode.CancellationToken,
   ): Promise<MeshyTaskStatus> {
+    if (!asset.preview_id) {
+      throw new Error(`[${asset.id}] preview_id missing before getFinalTask`);
+    }
     if (ctx.skipRefine) {
       return client.getTask(asset.preview_id);
     }
@@ -279,6 +285,9 @@ export class GenerateFromFileTool implements vscode.LanguageModelTool<GenerateFr
     }
     if (!asset.refine_done) {
       const refineId = asset.refine_id;
+      if (!refineId) {
+        throw new Error(`[${asset.id}] refine_id missing before polling`);
+      }
       await client.pollUntilDone(
         refineId,
         (status, pct) => { vscode.window.setStatusBarMessage(`Meshy [${asset.id}] refine: ${status} ${pct}%`, 8_000); },
@@ -286,6 +295,9 @@ export class GenerateFromFileTool implements vscode.LanguageModelTool<GenerateFr
       );
       asset.refine_done = true;
       this.saveFile(ctx.assetsFilePath, ctx.data);
+    }
+    if (!asset.refine_id) {
+      throw new Error(`[${asset.id}] refine_id missing after refine stage`);
     }
     return client.getTask(asset.refine_id);
   }
