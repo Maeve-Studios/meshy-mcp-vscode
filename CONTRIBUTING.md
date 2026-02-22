@@ -33,12 +33,12 @@ npm run watch
 
 ### Available scripts
 
-| Command | Description |
-| --- | --- |
-| `npm run watch` | Incremental webpack build (development mode) |
-| `npm run compile` | Single webpack build (development mode) |
-| `npm run package` | Production webpack bundle (minified) |
-| `npm run lint` | Run ESLint across all source files |
+| Command                     | Description                                  |
+| --------------------------- | -------------------------------------------- |
+| `npm run watch`             | Incremental webpack build (development mode) |
+| `npm run compile`           | Single webpack build (development mode)      |
+| `npm run package`           | Production webpack bundle (minified)         |
+| `npm run lint`              | Run ESLint across all source files           |
 | `npm run vscode:prepublish` | Alias for `npm run package` (called by vsce) |
 
 ### Linting
@@ -75,6 +75,7 @@ src/
 ```
 
 All tools implement `vscode.LanguageModelTool<T>` from the VS Code LM Tools API, with:
+
 - `prepareInvocation` — returns a confirmation dialog shown to the user before execution
 - `invoke` — the actual tool logic
 

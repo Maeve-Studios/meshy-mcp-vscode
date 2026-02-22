@@ -39,13 +39,13 @@ The extension activates automatically — no compilation or setup required. Open
 
 ## Available Tools
 
-| Tool | What it does |
-| --- | --- |
-| `meshy_preview` | Submit a Text-to-3D preview task and return the task ID |
-| `meshy_refine` | Add PBR textures to a completed preview task |
-| `meshy_status` | Check the status and progress of any task |
-| `meshy_download` | Download the GLB from a completed task to a local path |
-| `meshy_generate` | Full pipeline: preview → refine → download in one step |
+| Tool                       | What it does                                                      |
+| -------------------------- | ----------------------------------------------------------------- |
+| `meshy_preview`            | Submit a Text-to-3D preview task and return the task ID           |
+| `meshy_refine`             | Add PBR textures to a completed preview task                      |
+| `meshy_status`             | Check the status and progress of any task                         |
+| `meshy_download`           | Download the GLB from a completed task to a local path            |
+| `meshy_generate`           | Full pipeline: preview → refine → download in one step            |
 | `meshy_generate_from_file` | Batch-process a JSON assets file, resuming from where it left off |
 
 You can reference these tools directly in Copilot chat using `#meshy_generate`, `#meshy_status`, etc., or simply describe what you want and Copilot will invoke the appropriate tool.
@@ -54,11 +54,11 @@ You can reference these tools directly in Copilot chat using `#meshy_generate`, 
 
 These settings can be changed in VS Code Settings (`Ctrl+,`) under **Meshy**:
 
-| Setting | Description | Default |
-| --- | --- | --- |
-| `meshy.apiKey` | Your Meshy.ai API key | _(none)_ |
-| `meshy.pollIntervalSeconds` | How often to poll for task completion | `10` |
-| `meshy.defaultStyleSuffix` | Text appended to every generation prompt | _(none)_ |
+| Setting                       | Description                                | Default  |
+| ----------------------------- | ------------------------------------------ | -------- |
+| `meshy.apiKey`                | Your Meshy.ai API key                      | _(none)_ |
+| `meshy.pollIntervalSeconds`   | How often to poll for task completion      | `10`     |
+| `meshy.defaultStyleSuffix`    | Text appended to every generation prompt   | _(none)_ |
 | `meshy.defaultNegativePrompt` | Negative prompt applied to all generations | _(none)_ |
 
 ## Batch Generation: Assets File Format
@@ -91,7 +91,7 @@ Progress fields (`preview_id`, `refine_id`, `done`) are written back to the file
 
 You can use the `only` parameter to process a subset of assets by ID (partial match):
 
-> *"Run meshy_generate_from_file on assets.json, but only process Tier1/air_intake_pump"*
+> _"Run meshy_generate_from_file on assets.json, but only process Tier1/air_intake_pump"_
 
 Use `dry_run: true` to preview what would be processed without making any API calls.
 
@@ -99,10 +99,10 @@ Use `dry_run: true` to preview what would be processed without making any API ca
 
 The extension will show a confirmation prompt before making any API calls that consume credits.
 
-| Operation | Cost |
-| --- | --- |
-| Preview (Text-to-3D, Meshy-6) | 20 credits |
-| Refine / PBR texturing | 10 credits |
+| Operation                        | Cost       |
+| -------------------------------- | ---------- |
+| Preview (Text-to-3D, Meshy-6)    | 20 credits |
+| Refine / PBR texturing           | 10 credits |
 | Full pipeline (`meshy_generate`) | 30 credits |
 
 Credit costs are shown in the confirmation dialog before each operation. For batch runs, the total cost across all pending assets is shown upfront.

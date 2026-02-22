@@ -6,11 +6,11 @@ This document describes the automated build and release pipelines for the extens
 
 There are three GitHub Actions workflows:
 
-| Workflow | File | Trigger |
-| --- | --- | --- |
-| **Build** | `.github/workflows/build.yml` | Push to `main` with relevant file changes |
-| **Release** | `.github/workflows/release.yml` | GitHub Release published |
-| **Release Drafter** | `.github/workflows/release-drafter.yml` | Push to `main`, PR open/reopen/sync |
+| Workflow            | File                                    | Trigger                                   |
+| ------------------- | --------------------------------------- | ----------------------------------------- |
+| **Build**           | `.github/workflows/build.yml`           | Push to `main` with relevant file changes |
+| **Release**         | `.github/workflows/release.yml`         | GitHub Release published                  |
+| **Release Drafter** | `.github/workflows/release-drafter.yml` | Push to `main`, PR open/reopen/sync       |
 
 ---
 
@@ -66,12 +66,12 @@ Release Drafter automatically maintains a rolling draft release as PRs are merge
 
 Apply one of these labels to a PR to control the version resolution:
 
-| Label | Effect | Example |
-| --- | --- | --- |
-| `major` | Major version bump | `0.1.0` → `1.0.0` |
-| `minor` | Minor version bump | `0.1.0` → `0.2.0` |
-| `patch` | Patch version bump | `0.1.0` → `0.1.1` |
-| _(none)_ | Defaults to patch | `0.1.0` → `0.1.1` |
+| Label    | Effect             | Example           |
+| -------- | ------------------ | ----------------- |
+| `major`  | Major version bump | `0.1.0` → `1.0.0` |
+| `minor`  | Minor version bump | `0.1.0` → `0.2.0` |
+| `patch`  | Patch version bump | `0.1.0` → `0.1.1` |
+| _(none)_ | Defaults to patch  | `0.1.0` → `0.1.1` |
 
 The draft release is visible at [GitHub Releases](https://github.com/Maeve-Studios/meshy-mcp-vscode/releases).
 
