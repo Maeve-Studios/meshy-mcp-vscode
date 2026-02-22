@@ -1,41 +1,37 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+    release:
+        types: [published]
 
 jobs:
-  release:
-    name: Build and Release VSIX
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    release:
+        name: Build and Release VSIX
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
 
-      - name: Install dependencies
-        run: npm ci
+            - name: Install dependencies
+              run: npm ci
 
-      - name: Package extension
-        run: npx @vscode/vsce package --no-dependencies
+            - name: Package extension
+              run: npx @vscode/vsce package --no-dependencies
 
-      - name: Get VSIX filename
-        id: vsix
-        run: echo "file=$(ls *.vsix)" >> $GITHUB_OUTPUT
+            - name: Get VSIX filename
+              id: vsix
+              run: echo "file=$(ls *.vsix)" >> $GITHUB_OUTPUT
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          name: ${{ github.ref_name }}
-          tag_name: ${{ github.ref_name }}
-          files: ${{ steps.vsix.outputs.file }}
-          generate_release_notes: true
+            - name: Upload VSIX to release
+              run: gh release upload ${{ github.event.release.tag_name }} ${{ steps.vsix.outputs.file }}
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
